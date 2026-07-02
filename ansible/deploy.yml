@@ -1,0 +1,48 @@
+---
+- name: Deploy do site estatico
+  hosts: web
+  gather_facts: false
+
+  vars:
+    deploy_path: "/var/www/aula-ci-cd"
+
+  tasks:
+    - name: Validar arquivo index.html no repositorio
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../index.html"
+      delegate_to: localhost
+      register: index_file
+
+    - name: Falhar se index.html nao existir
+      ansible.builtin.fail:
+        msg: "Arquivo index.html nao encontrado no repositorio"
+      when: not index_file.stat.exists
+
+    - name: Validar arquivo styles.css no repositorio
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../styles.css"
+      delegate_to: localhost
+      register: css_file
+
+    - name: Falhar se styles.css nao existir
+      ansible.builtin.fail:
+        msg: "Arquivo styles.css nao encontrado no repositorio"
+      when: not css_file.stat.exists
+
+    - name: Criar diretorio remoto do site
+      ansible.builtin.file:
+        path: "{{ deploy_path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copiar index.html para o servidor
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../index.html"
+        dest: "{{ deploy_path }}/index.html"
+        mode: "0644"
+
+    - name: Copiar styles.css para o servidor
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../styles.css"
+        dest: "{{ deploy_path }}/styles.css"
+        mode: "0644"
